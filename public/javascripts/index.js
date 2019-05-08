@@ -27,7 +27,7 @@ $(()=>{
 	for (var i = 1; i <= nBalls; i++) {
 		//var alpha = ((Math.PI * 2) / nBalls) * i * nbTour 
 		var alpha = i * 1.2 * (Math.PI * 2) / nBalls - 0.50
-		var speed = 10
+		var speed = 6
 
 		balls.push(new Ball(canvas.width/2 + 150, canvas.height/2, speed, alpha, 5, `black`))
 	}
