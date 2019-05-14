@@ -8,7 +8,7 @@ var indexRouter = require('./routes/index')
 var usersRouter = require('./routes/users')
 
 var app = express()
-app.listen(5000)
+app.listen(process.env.PORT || 3000)
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'))

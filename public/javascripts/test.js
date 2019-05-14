@@ -6,7 +6,7 @@ $(()=>{
 
 
 	//Initialisation des composants
-	var OX = canvas.height
+	var OY = canvas.height
 
 	//Balls
 	var balls = []
@@ -28,9 +28,9 @@ $(()=>{
 			  	${i}. PosX<input id="posx${i}" type="number" value="${ball.x}" step="5">
 			  	PosY<input id="posy${i}" type="number" value="${ball.y}" step="5">
 			  	Speed<input id="speed${i}" type="number" value="${ball.speed}" step="5">
-			  	Alpha<input id="alpha${i}" type="number" value="${ball.alpha}" step="0.05">  		
+			  	Alpha<input id="alpha${i}" type="number" value="${ball.alpha}" step="0.05">	
 		  	</div>
-		`)		
+		`)
 	})
 	
 	function Ball(index, x, y, speed, alpha, radius, color){
@@ -56,7 +56,7 @@ $(()=>{
 	  	
 		  	//Ball
 		    ctx.beginPath();
-		    ctx.arc(this.x, OX-this.y, this.radius, 0, Math.PI * 2, true)
+		    ctx.arc(this.x, OY-this.y, this.radius, 0, Math.PI * 2, true)
 		    ctx.closePath()
 		    ctx.fillStyle = this.color
 		    ctx.fill()
@@ -66,14 +66,15 @@ $(()=>{
 		    var offsetY = this.radius * Math.sin(this.alpha + Math.PI / 2)
 		    ctx.beginPath();
 		    ctx.setLineDash([3, 5])
-		    ctx.arc(this.x + this.vx, OX-(this.y + this.vy), this.radius, 0, Math.PI * 2, true)
-		    ctx.moveTo(this.x + offsetX, OX-(this.y + offsetY))
-		    ctx.lineTo(this.x + this.vx + offsetX, OX-(this.y + this.vy + offsetY))
-		    ctx.moveTo(this.x - offsetX, OX-(this.y - offsetY))
-		    ctx.lineTo(this.x + this.vx - offsetX, OX-(this.y + this.vy - offsetY))		    
+		    ctx.arc(this.x + this.vx, OY-(this.y + this.vy), this.radius, 0, Math.PI * 2, true)
+		    ctx.moveTo(this.x + offsetX, OY-(this.y + offsetY))
+		    ctx.lineTo(this.x + this.vx + offsetX, OY-(this.y + this.vy + offsetY))
+		    ctx.moveTo(this.x - offsetX, OY-(this.y - offsetY))
+		    ctx.lineTo(this.x + this.vx - offsetX, OY-(this.y + this.vy - offsetY))		    
 		    ctx.closePath()
 		    ctx.stroke()
-			
+
+
 		}
 
 		this.rebond = (surface) => {
@@ -115,6 +116,46 @@ $(()=>{
 		})
 
 
+		//Contact
+		var contact = calcContact(balls[0], balls[1])
+		if (contact) {
+			//Intersection
+			ctx.setLineDash([3, 0])
+			ctx.beginPath();
+			ctx.arc(contact.x, OY-contact.y, balls[0].radius, 0, Math.PI * 2, true)
+			ctx.arc(contact.x, OY-contact.y, balls[1].radius, 0, Math.PI * 2, true)
+			ctx.closePath()
+			ctx.stroke()
+
+			//Distance de l'intersection
+			var a = getDistance(balls[0], contact)
+			var b = getDistance(balls[1], contact)
+
+			//Distance d'une ball au moment ou l'autre est à l'intersection
+			var ratio = balls[0].speed / balls[1].speed
+			a.d2 = b.d * ratio
+			b.d2 = a.d / ratio
+
+			//Position des balls
+			a.x = balls[0].x + a.d2 * Math.cos(balls[0].alpha)
+			a.y = balls[0].y + a.d2 * Math.sin(balls[0].alpha)
+			b.x = balls[1].x + b.d2 * Math.cos(balls[1].alpha)
+			b.y = balls[1].y + b.d2 * Math.sin(balls[1].alpha)
+
+			//dessin
+			ctx.setLineDash([3, 5])
+			ctx.beginPath();
+			ctx.arc(a.x, OY-a.y, balls[0].radius, 0, Math.PI * 2, true)
+			ctx.closePath()
+			ctx.stroke()
+
+			ctx.beginPath();
+			ctx.arc(b.x, OY-b.y, balls[1].radius, 0, Math.PI * 2, true)
+			ctx.closePath()
+			ctx.stroke()	
+
+		}
+
 		raf = window.requestAnimationFrame(draw)
 	}
 
@@ -133,6 +174,50 @@ $(()=>{
 
 	balls.forEach(ball => ball.draw)
 
+
+	var calcContact = (ballA, ballB) => {
+		//Intersection
+		// y = tan(angleA)x+YA-tan(angleA)XA
+		// y = tan(angleB)x+YB-tan(angleB)XB
+
+		// tan(angleA)x+YA-tan(angleA)XA = tan(angleB)x+YB-tan(angleB)XB
+		// x(tan(angleA) - tan(angleB)) = YB - tan(angleB)XB - YA + tan(angleA)XA
+		// x = (YB - tan(angleB)XB - YA + tan(angleA)XA) / (tan(angleA) - tan(angleB))
+		// y = tan(angleA)ix+YA-tan(angleA)XA
+
+		var x = (ballB.y - Math.tan(ballB.alpha) * ballB.x + Math.tan(ballA.alpha) * ballA.x - ballA.y) / (Math.tan(ballA.alpha) - Math.tan(ballB.alpha))
+		var y = Math.tan(ballA.alpha) * x + ballA.y - Math.tan(ballA.alpha) * ballA.x
+
+		//test direction
+		var point = {x: x, y: y}
+
+		var converge = getDirection(ballA, point) && getDirection(ballB, point)
+
+		return converge ? point : undefined
+
+	}
+
+	var getDistance = (pA, pB) => {
+		var dx = pB.x - pA.x
+		var dy = pB.y - pA.y
+		return {dx: dx, dy: dy, d: (dx**2 + dy**2)**0.5}	
+	}
+
+	var getDirection = (ball, point) => {
+		var direction = false
+		var {dx, dy} = getDistance(ball, point)
+
+		if (ball.alpha < 0.5 * Math.PI) {
+			if (dx >= 0 && dy >= 0) direction = true
+		}else if (ball.alpha < 1 * Math.PI) {
+			if (dx < 0 && dy >= 0) direction = true
+		}else if (ball.alpha < 1.5 * Math.PI) {
+			if (dx < 0 && dy < 0) direction = true
+		}else {
+			if (dx >= 0 && dy < 0) direction = true
+		}
+		return direction
+	}
 
 	var calcDistances = (ballA, ballB) => {
 		var nPeriode = 100

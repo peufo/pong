@@ -1,9 +1,10 @@
 {
   "name": "pong",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "pm2 start app.js --watch"
+    "dev": "cross-env NODE_ENV=development PORT=3001 pm2 start --name pong_dev app.js --watch & pm2 monit",
+    "prod": "cross-env NODE_ENV=production pm2 start --name pong_prod app.js & pm2 monit"
   },
   "dependencies": {
     "cookie-parser": "~1.4.3",
