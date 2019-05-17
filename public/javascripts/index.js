@@ -1,10 +1,11 @@
 $(()=>{
 
-	var canvas = document.getElementById('canvas');
-	var ctx = canvas.getContext('2d');
+	var canvas = document.getElementById('canvas')
+	var ctx = canvas.getContext('2d')
 	var raf
 
 	//Initialisation de la carte
+	var OY = canvas.height
 
 	//Bord
 	var BORDER_WIDTH = 5
@@ -29,90 +30,86 @@ $(()=>{
 		var alpha = i * 1.2 * (Math.PI * 2) / nBalls - 0.50
 		var speed = 6
 
-		balls.push(new Ball(canvas.width/2 + 150, canvas.height/2, speed, alpha, 5, `black`))
+		balls.push(new Ball(canvas.width/2 + 150, canvas.height/2, speed, alpha, 30, `black`))
 	}
 
 
 
 	
 	function Ball(x, y, speed, alpha, radius, color){
-	  this.x = x
-	  this.y = y
-	  this.speed = speed
-	  this.alpha = alpha
-	  this.radius = radius
-	  this.color = color
-	  this.calcvx = () => {
-	  	this.vx = this.speed * Math.sin(this.alpha + Math.PI / 2)
-	  	return this.vx
-	  }
-	  this.calcvy = () => {
-	  	this.vy = this.speed * Math.cos(this.alpha + Math.PI / 2)
-	  	return this.vy
-	  }
-	  this.calcvx()
-	  this.calcvy()
-	  
-	  this.draw = () => {
-	  	
-	  	//Ball
-	    ctx.beginPath();
-	    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
-	    ctx.closePath();
-	    ctx.fillStyle = this.color;
-	    ctx.fill();
+		this.x = x
+		this.y = y
+		this.speed = speed
+		this.alpha = alpha
+		this.radius = radius
+		this.color = color
+	  	this.calcvx = () => {
+	  		return this.speed * Math.cos(this.alpha)
+	  	}
+	  	this.calcvy = () => {
+	  		return this.speed * Math.sin(this.alpha)
+	  	}
+		this.vx = this.calcvx()
+		this.vy = this.calcvy()
 		
-	  }
+		this.draw = () => {
+			
+			//Ball
+			ctx.beginPath()
+			ctx.arc(this.x, OY-this.y, this.radius, 0, Math.PI * 2, true)
+			ctx.closePath()
+			ctx.fillStyle = this.color
+			ctx.fill()
 
-	  this.rebond = (surface) => {
+		}
 
-	  	this.alpha = this.alpha + Math.PI - 2 * (this.alpha - surface)
-		this.calcvx()
-		this.calcvy()
+		this.rebond = (surface) => {
 
-	  }
+
+			this.alpha = 2 * surface + Math.PI - this.alpha
+	  		this.x -= this.vx
+			this.y -= this.vy
+			this.vx = this.calcvx()
+			this.vy = this.calcvy()
+	  		this.x += this.vx
+			this.y += this.vy
+
+		}
 
 	  	this.move = () => {
 
 	  		this.x += this.vx
 			this.y += this.vy
 
+
+			//Rebond
+
 			//Bord
 			if (this.x + this.radius + BORDER_WIDTH > canvas.width || this.x - this.radius - BORDER_WIDTH < 0) {
-			 this.rebond(0)
+				this.rebond(0)
 			}
-
 			//Fond
-			if (pods.length == 1 && this.y - this.radius < 0) this.rebond(Math.PI / 2)
+			//if (pods.length == 1 && this.y - this.radius < 0) this.rebond(Math.PI / 2)
 	
 			//Pod
 			pods.forEach((pod, i) => {
-
-				var distance = ((pod.x - this.x)**2 + (pod.y - this.y)**2)**0.5	
+				var {d, dx, dy, a} = getDistance({x: pod.x, y: pod.y}, {x: this.x, y: this.y})	
 				
-
-				if (distance - this.radius <= pod.radius) {
-					
-					var angle = Math.PI / 2 - Math.asin((pod.y - this.y) / distance)
-					console.log(i, distance - this.radius, angle)
-					console.log('BOOM')
-					//if (Math.abs(angle - this.alpha) > Math.PI / 2) { //Anti double rebonds
-						if (this.x >= pod.x) {
-							if (this.y >= pod.y) this.rebond(1.5 * Math.PI - angle)
-							else this.rebond(0.5 * Math.PI - angle)
-						}else{
-							if (this.y >= pod.y) this.rebond(1.5 * Math.PI + angle)
-							else this.rebond(1.5 * Math.PI + angle)
-						}					
-					//}
-					console.log(i, distance - this.radius, angle)
-				}else{}
+				if (d - this.radius <= pod.radius) {
+					console.log(a, this.alpha, d, dx, dy, 'Before BOOM')
+					this.rebond(a)
+					var {d, dx, dy, a} = getDistance({x: pod.x, y: pod.y}, {x: this.x, y: this.y})	
+					console.log(a, 2 * Math.PI - this.alpha, d, 'After BOOM')
+				}
 			})
 	  	}
 	}
 
 	//Pod
-	var pods = [new Pod(0, canvas.width / 2, 0, 0.5), new Pod(1, canvas.width / 2, canvas.height, 0.5)]
+	var pods = [
+		new Pod(0, canvas.width / 2, 0, 0.5),
+		new Pod(1, canvas.width / 2, canvas.height, 0.5)
+	]
 
 	function Pod(player, x, y, accel, radius, angle) {
 		
@@ -129,13 +126,9 @@ $(()=>{
 
 		this.draw = () => {
 			var vertical = 1.5 * Math.PI
+			//POD
 			ctx.beginPath()
-			ctx.arc(this.x, this.y, this.radius, vertical - this.angle, vertical + this.angle)
-			ctx.stroke()
-
-			ctx.beginPath()
-			ctx.moveTo(this.x - this.width, this.y)
-			ctx.lineTo(this.x + this.width, this.y)
+			ctx.arc(this.x, OY - this.y, this.radius, vertical - this.angle, vertical + this.angle)
 			ctx.stroke()
 
 		}
@@ -153,23 +146,31 @@ $(()=>{
 			}
 
 			if (this.x - this.width < BORDER_WIDTH ){
+				
 				//Tape a gauche
 				this.speed = -this.speed
 
 			}else if (this.x + this.width > canvas.width - BORDER_WIDTH) {
+				
 				//Tape à droite
 				this.speed = -this.speed
 
 			}else if (this.speed.toFixed(2) != 0 && ((!this.pressLeft && !this.pressRight) || (this.pressLeft && this.pressRight))){
+				
 				//Ralenti
 				if (this.speed < 0) this.speed += this.accel
 				else if (this.speed > 0) this.speed -= this.accel
+
 			}else if (this.pressRight) {
+
 				if (this.speed >= 0) this.speed += this.accel		//Accélère
 				if (this.speed < 0) this.speed += 2 * this.accel	//Freine
+
 			}else if (this.pressLeft) {
+
 				if (this.speed <= 0) this.speed -= this.accel 		//Accélère
 				if (this.speed > 0) this.speed -= 2 * this.accel 	//Freine
+
 			}	
 
 			//Déplacement
@@ -177,6 +178,21 @@ $(()=>{
 		}
 
 	}
+
+	var getDistance = (pA, pB) => {
+		var dx = pB.x - pA.x
+		var dy = pB.y - pA.y
+
+		var angle = Math.atan(dy / dx)
+
+		if (dx < 0 && 0 < dy) angle = 0.5 * Math.PI - angle
+		else if (dx < 0 && dy < 0) angle += Math.PI
+		else if (0 < dx && dy < 0) angle = 1.5 * Math.PI - angle
+
+
+		return {dx: dx, dy: dy, d: (dx**2 + dy**2)**0.5, a: angle}	
+	}
+
 
 	function draw() {
 
@@ -199,9 +215,6 @@ $(()=>{
 				ball.move()					
 			}
 		})
-
-
-
 
 
 		raf = window.requestAnimationFrame(draw)

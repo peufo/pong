@@ -42,7 +42,7 @@ $(()=>{
 	  	this.radius = radius
 	  	this.color = color
 	  	this.calcvx = () => {
-	  	this.vx = this.speed * Math.cos(this.alpha)
+	  		this.vx = this.speed * Math.cos(this.alpha)
 	  		return this.vx
 	  	}
 	  	this.calcvy = () => {
