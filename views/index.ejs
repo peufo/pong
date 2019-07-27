@@ -3,11 +3,19 @@
   <head>
     <title><%= title %></title>
     <link rel='stylesheet' href='/stylesheets/style.css'>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/javascripts/util-elastic-collision.js"></script>
     <script type="text/javascript" src="/javascripts/index.js"></script>
   </head>
   <body>
-  	<a href="/test">test collision</a><br><br><br>
-  	<canvas id="canvas" width="500" height="500"></canvas>
+    <div id="container" class="w3-center">
+
+      <canvas id="canvas" width="700" height="800"></canvas>
+
+      <div id="reset" class="w3-button w3-border w3-round w3-left w3-margin">
+        Reset
+      </div>
+    </div>
   </body>
 </html>
