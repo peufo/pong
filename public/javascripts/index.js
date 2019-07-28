@@ -19,7 +19,6 @@ $(()=>{
 	ctx.stroke()
 
 
-
 	//Initialisation des composants
 	let balls = []
 	let pods = []
@@ -40,7 +39,7 @@ $(()=>{
 			let vx = speed * Math.cos(alpha)
 			let vy = speed * Math.sin(alpha)
 
-			balls.push(new Ball(canvas.width/2 + 150, canvas.height/2, 0, 0, 10, `black`))
+			balls.push(new Ball(canvas.width/2, canvas.height/2, 0, 0, 10, `black`))
 		}
 		
 		//Pod
@@ -133,6 +132,7 @@ $(()=>{
 		this.draw = () => {
 			let vertical = 1.5 * Math.PI
 			//POD
+			ctx.lineWidth = 5
 			ctx.beginPath()
 			ctx.arc(this.x, OY - this.y, this.radius, vertical - this.angle, vertical + this.angle)
 			ctx.stroke()
@@ -180,9 +180,13 @@ $(()=>{
 			}			
 
 			//Axe Y
-			if (this.y < 0 + this.radius) {//Tape en bas
+			if (this.player == 1 && this.y <= canvas.height / 2 + this.radius) {//Tape en bas 0(haut)
 				this.vy = Math.abs(this.vy)
-			}else if (this.y > canvas.height - this.radius) {//Tape en haut
+			}else if (this.player == 0 && this.y <= 0 + this.radius) {//Tape en bas 1(bas)
+				this.vy = Math.abs(this.vy)
+			}else if (this.player == 1 && this.y > canvas.height - this.radius) {//Tape en haut player 0(haut)
+				this.vy = - Math.abs(this.vy)
+			}else if (this.player == 0 && this.y > canvas.height / 2 - this.radius) {//Tape en haut player 1(bas)
 				this.vy = - Math.abs(this.vy)
 			}else{
 				// Commande axe Y
@@ -231,7 +235,13 @@ $(()=>{
 
 		//Initialisation
 		ctx.clearRect(BORDER_WIDTH, 0, canvas.width - 2 * BORDER_WIDTH, canvas.height)
-		
+		ctx.lineWidth = 1
+		ctx.beginPath()
+		ctx.moveTo(0, canvas.height / 2);
+		ctx.lineTo(canvas.width, canvas.height / 2);
+		ctx.stroke();
+
+
 		//Pod
 		pods.forEach(pod => {
 			pod.draw()
@@ -246,11 +256,11 @@ $(()=>{
 		//Balls
 		balls.forEach(ball => {
 			if (ball.y - ball.radius > canvas.height) {
-				relocation(0)
+				relocation(0, 'bas')
 				pods[1].life--
 				if(pods[1].life == 0) win = 'Le joueur du bas gagne !'
 			}else if(ball.y + ball.radius < 0) {
-				relocation(0)
+				relocation(0, 'haut')
 				pods[0].life--
 				if(pods[0].life == 0) win = 'Le joueur du haut gagne !'
 			}else{
@@ -259,11 +269,11 @@ $(()=>{
 			}
 		})
 
-		/*
+		
 		if (win) {
 			alert(win)
 			init()
-		}*/
+		}
 		raf = window.requestAnimationFrame(draw)
 	}
 
@@ -273,11 +283,17 @@ $(()=>{
 		init()
 	})
 
-	function relocation(index) {
-		balls[index].x = canvas.width / 2
-		balls[index].y = canvas.height / 2
-		balls[index].vx = 0
-		balls[index].vy = 0
+	function relocation(ballIndex, winner) {
+		balls[ballIndex].x = canvas.width / 2
+		
+		balls[ballIndex].vx = 0
+		balls[ballIndex].vy = 0
+		if (winner == 'haut') {
+			balls[ballIndex].y = canvas.height / 2 - 50
+		}else if (winner == 'bas') {
+			balls[ballIndex].y = canvas.height / 2 + 50
+		}
+
 	}
 
 	/*
